@@ -137,7 +137,7 @@ dotplot(Murder ~ UrbanPop_Quartile| Region, data = USArrests_Final,
         xlab = "Region", ylab = "Murder Arrests per 100,000")
 
 # another possible dot plot example? 
-#dotplot(Region ~ UrbanPop, data = USArrests_Region,
+# dotplot(Region ~ UrbanPop, data = USArrests_Region,
 #          xlab = "Urban Population", ylab = "Region")
 
 ```
@@ -222,7 +222,6 @@ xy_ggplot
 
 * ggplot - popular because it is an easy way to create customize charts in R. It is also easy to create multi-layered complicated graphs in R. 
 * highcharter - similar to ggplot and lattice, except it is based on a pre-existing Javascript library, and is well known for its easy to customize visual themes. 
-* leaflet - just like highcharter, leaflet has a javascript parent. Leaflet offers a lightweight but powerful way to build interactive maps, which you've probably seen in action (in their JS form) on sites ranging from The New York Times and The Washington Post to GitHub and GIS specialists like Mapbox and CartoDB.
 * RColorBrewer - another package used specifically for its ability to create aesthetically appealing graphs, based on the work of cartographer Cynthia Brewer.  
 
 
