@@ -1,32 +1,235 @@
 ---
-title: "Package Project"
-author: "Annie Williams"
-date: "2/23/2020"
-output: html_document
+title: "Lattice Package Project"
+author: "Rachel Alexander, Annie Williams"
+date: "3/04/2020"
+output: 
+  html_document:
+    theme: paper
+    toc: true
+    toc_depth: 5
+    toc_float: true 
+    toc_collapsed: false
 ---
 
 ```{r setup, include=FALSE}
+
+library('dplyr')
+library('lattice')
+library('ggplot2')
+
 knitr::opts_chunk$set(echo = TRUE)
 
-hiiiii
+USArrests_NE <- USArrests[c("Maine", "New Hampshire", "Massachusetts", "Vermont", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland"), ]
+USArrests_NE <- mutate(USArrests_NE, Region = 1)
+
+USArrests_SE <- USArrests[c("Virginia", "West Virginia", "Kentucky", "Tennessee", "North Carolina", "South Carolina", "Arkansas", "Mississippi", "Alabama", "Georgia", "Louisiana", "Florida"), ]
+USArrests_SE <- mutate(USArrests_SE, Region = 2)
+
+USArrests_MW <- USArrests[c("Ohio", "Michigan", "Indiana", "Illinois", "Wisconsin", "Iowa", "Missouri", "Minnesota", "Kansas", "Nebraska", "South Dakota", "North Dakota"), ]
+USArrests_MW <- mutate(USArrests_MW, Region = 3)
+
+USArrests_SW <- USArrests[c("Oklahoma", "Texas", "New Mexico", "Arizona"), ]
+USArrests_SW <- mutate(USArrests_SW, Region = 4)
+
+USArrests_W <- USArrests[c("Montana", "Wyoming", "Colorado", "Utah", "Idaho", "Washington", "Oregon", "Nevada", "California", "Hawaii", "Alaska"), ]
+
+USArrests_W <- mutate(USArrests_W, Region = 5)
+
+USArrests_Region <- rbind(USArrests_NE, USArrests_SE, USArrests_MW, USArrests_SW, USArrests_W)
+
+USArrests_TC <- mutate(USArrests_Region, Total_Crime = rowSums(USArrests_Region[c(1,2,4)]))
+
+UP_quartiles <- summary(USArrests_TC$UrbanPop)
+
+USArrests_UPQ1 <- filter(USArrests_TC, UrbanPop>0, UrbanPop<=50)%>%
+                  mutate(UrbanPop_Quartile = "Minority Urban Population")
+
+USArrests_UPQ2 <- filter(USArrests_TC, UrbanPop>50, UrbanPop<=100)%>%
+                  mutate(UrbanPop_Quartile = "Majority Urban Population")
+
+USArrests_Final <- rbind(USArrests_UPQ1, USArrests_UPQ2)
+
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Package Overview
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The Lattice package is a tool for data visualization, written to provide a better alternative to base R graphics. Through the use of trellis graphics, Lattice allows the user to more easily display relationships within multivariate data. Lattice’s focus on multivariate data allows it to easily produce “small multiple” plots, which are multiple charts arranged on a single grid. These are useful when comparing multiple levels of data across a single variable.
 
+Lattice includes  functions which allow the user to display multivariate relationships through quantile plots, matrix plots, as well as a wide range of traditional plots like bar charts and histograms. 
+
+
+### Version History
+V0.2-3 through V0.20-40 are currently available, with V0.20-40 being the most recent version. 
+
+### How it works 
+* Lattice plots data onto panels. Input data is split into sections called packets, sorting each packet into the appropriate panel via the panel function. All high-level functions contain their own default panel functions which can be used to customize how packets are sorted and how plots are displayed.
+    * (x, z | y)
+* Higher level Lattice functions do not calculate the relationships between input variables; they automatically plot points by returning objects and then printing them on an actual graph.
+    * Notes: Calling one function within another supresses automatic plotting
+
+### Dependencies
+* Lattice is dependent on the following packages:
+  * grid
+  * grDevices
+  * graphics
+  * stats
+  * utils 
+
+## Examples of Usage
+
+### Dataset 
+For the following examples, we are using the USArrests data set included in base R. Not included in this document, we created three separate variables to make graphing easier.
+```{r}
+head(USArrests)
+head(USArrests_Final)
+```
+
+### 3D Scatter Plot
 ```{r cars}
-summary(cars)
+# used to show the relationship between 3 variables
+# ~ usually specifies y ~ x or "y as a function of x"
+# cloud requires a formula in the form of z ~ x * y
+
+cloud(Murder ~ Assault * UrbanPop, data = USArrests,
+      screen = list(x = -90, y = 70), distance = .4, zoom = .7)
+
 ```
 
-## Including Plots
+### Parallel Plot
+```{r parallel}
+# used for comparing many variables and seeing relationships between them
+# each line represents a stat
+# easy to put together, & get quick feel for data
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+parallelplot(USArrests)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+### Box Plot
+```{r bp, echo = TRUE}
+# box plots can displayed to easily compare groups of univariate data
+
+bwplot(Region ~ UrbanPop, data = USArrests_Region,
+       xlab = "Urban Population", ylab = "Region")
+
+```
+
+### Strip Plot
+```{r strip_plot}
+# strip plots are used for displaying univariate data (one variable)
+# lattice makes simple plots like this fast and easy
+
+stripplot(Region ~ UrbanPop, data = USArrests_Region,
+          xlab = "Urban Population", ylab = "Region")
+
+```
+
+### Dot Plot
+```{r dp, echo = TRUE}
+# dot plots are commonly used for multivariate data.
+# lattice makes it easy to sort data into groups
+#   numeric values of y are graphed against qualitative levels of x
+# aesthetics are difficult to manipulate
+
+dotplot(Murder ~ UrbanPop_Quartile| Region, data = USArrests_Final,
+        layout = c(5,1),
+        xlab = "Region", ylab = "Murder Arrests per 100,000")
+
+# another possible dot plot example? 
+#dotplot(Region ~ UrbanPop, data = USArrests_Region,
+#          xlab = "Urban Population", ylab = "Region")
+
+```
+
+### Bar Chart
+```{r bc, echo = TRUE}
+# example of small multiple plots
+# bar charts can be used for both univariate and multivariate data
+
+A <- barchart(Region ~ Assault,  data = USArrests_Final,
+         groups = UrbanPop_Quartile,
+         auto.key = TRUE,
+         main = "Assault by Region",
+         xlab = "Assault",
+         ylab = "Region")
+R <- barchart(Region ~ Rape,  data = USArrests_Final,
+         groups = UrbanPop_Quartile,
+         auto.key = TRUE,
+         main = "Rape by Region",
+         xlab = "Rape",
+         ylab = "Region")
+M <- barchart(Region ~ Murder,  data = USArrests_Final,
+         groups = UrbanPop_Quartile,
+         auto.key = TRUE,
+         main = "Murder by Region",
+         xlab = "Murder",
+         ylab = "Region")
+
+print(R, split = c(1, 1, 2, 2), more = TRUE)
+print(A, split = c(2, 1, 2, 2), more = TRUE)
+print(M, split = c(1, 2, 2, 2), more = FALSE)
+
+```
+
+### Two sample quantile plot
+```{r}
+# two sample quantile plots are used to determine if two data sets come from a population with a simlar distribution
+# this example illustrates how to use the qq function
+
+# Total Crime rates from Minority Urban and Majority Urban Populations
+#   given the a limited number of observations for each variable, actual quantiles have not been calculated or graphed against each other
+#   thus no conclusions can be drawn
+
+qq(UrbanPop_Quartile ~ Total_Crime, 
+   aspect = 1, 
+   data = USArrests_Final,
+   subset = (UrbanPop_Quartile == "Majority Urban Population" | UrbanPop_Quartile == "Minority Urban Population"))
+```
+
+### Compared to ggplot
+```{r}
+
+xyplot(Assault ~ UrbanPop,
+       group=Region,             
+       data=USArrests_Final, 
+       xlab="Urban Population", 
+       auto.key = TRUE          # add legend 
+       # sub =                  # add subtitle to each graph
+       # main =                 # set main title
+       )
+
+```
+
+```{r}
+xy_ggplot <- ggplot(
+  data=USArrests_Final, 
+  mapping=aes(
+    x=UrbanPop,
+    y=Assault
+  )
+) 
+
+xy_ggplot <- xy_ggplot + 
+  geom_point(aes(color=Region)) + 
+  labs(x="Urban Population", y="Assault")
+
+xy_ggplot
+```
+
+
+## Similar Packages
+
+* ggplot - popular because it is an easy way to create customize charts in R. It is also easy to create multi-layered complicated graphs in R. 
+* highcharter - similar to ggplot and lattice, except it is based on a pre-existing Javascript library, and is well known for its easy to customize visual themes. 
+* leaflet - just like highcharter, leaflet has a javascript parent. Leaflet offers a lightweight but powerful way to build interactive maps, which you've probably seen in action (in their JS form) on sites ranging from The New York Times and The Washington Post to GitHub and GIS specialists like Mapbox and CartoDB.
+* RColorBrewer - another package used specifically for its ability to create aesthetically appealing graphs, based on the work of cartographer Cynthia Brewer.  
+
+
+## Reflection
+
+Coming from a background with ggplot, lattice was difficult to pick up. Many of the graphing functions offer lots of parameters, which makes it feel like you are setting up the entire graph at once, instead of layer by layer like ggplot. Lattice also does not make it particularly easy to edit the aesthetics of images - that we learned the hard way with creating our bar chart and dot plot. Many of the parameters names also did not feel intuitive, and needed to be read about. While ggplot and lattice are very similar,  [one source](https://learnr.wordpress.com/2009/08/26/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-final-part/) claims that lattice is faster than ggplot, and also allows users to fine tune their graphs more than ggplot. This might be true, but for the scope of this class and the graphs we are making, we are not sure if these pros are worthwhile. 
+
+Some features that could be tweaked include more intuitive parameter names, and other features to make manipulating aesthetics easier. Overall we felt as though lattice is more difficult to learn than ggplot, but offers many of the same features.  
+
+
